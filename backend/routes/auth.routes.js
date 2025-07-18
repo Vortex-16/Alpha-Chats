@@ -1,5 +1,5 @@
 import express from "express"
-import {login, logout, signUp} from '../controllers/auth.controllers.js'
+import {login, logout, signUp, requestPasswordReset, resetPassword} from '../controllers/auth.controllers.js'
 
 const authRouter=express.Router()
 
@@ -16,5 +16,9 @@ authRouter.get("/health", (req, res) => {
 authRouter.post("/signup",signUp)
 authRouter.post("/login",login)
 authRouter.get("/logout",logout)
+
+// Secure password reset routes
+authRouter.post("/forgot-password", requestPasswordReset)
+authRouter.post("/reset-password", resetPassword)
 
 export default authRouter

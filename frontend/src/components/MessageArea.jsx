@@ -661,8 +661,12 @@ function MessageArea({ socketData, messageHandlerRef }) {
             </div>              {/* Messages Area */}
             <div 
               ref={messagesContainerRef}
-              className={`flex-1 overflow-y-auto p-2 sm:p-6 space-y-4 relative`} 
-              style={{paddingBottom: isMobile ? (inputFocused ? '160px' : '200px') : '180px'}}
+              className={`flex-1 overflow-y-auto p-2 sm:p-6 relative`} 
+              style={{
+                paddingBottom: isMobile ? (inputFocused ? '300px' : '340px') : '320px',
+                scrollBehavior: 'smooth',
+                minHeight: '400px'
+              }}
             >
               {fetchingMessages ? (
                 <div className='flex items-center justify-center h-full'>
@@ -691,7 +695,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     data-message-id={msg._id}
                     className={`flex ${msg.sender === userData._id ? 'justify-end' : 'justify-start'} ${
                       isUnread ? 'animate-pulse-subtle' : ''
-                    }`}
+                    } mb-4 sm:mb-6`}
                   >                    <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'} ${isUnread ? 'unread-message' : ''}`}>
                       <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'} ${isUnread ? 'ring-2 ring-red-400 ring-opacity-50' : ''}`}>
                         {/* Message content */}                        {msg.image && (
@@ -741,7 +745,13 @@ function MessageArea({ socketData, messageHandlerRef }) {
                             </div>
                           </div>
                         ) : msg.message && (
-                          <p className='text-sm leading-relaxed whitespace-pre-wrap break-words'>{msg.message}</p>
+                          <p className={`leading-relaxed whitespace-pre-wrap break-words ${
+                            msg.message.length < 50 
+                              ? 'text-sm sm:text-base min-h-[1.5rem] py-1' 
+                              : 'text-sm leading-relaxed'
+                          }`}>
+                            {msg.message}
+                          </p>
                         )}
                         
                         {/* Timestamp and status */}
@@ -765,11 +775,14 @@ function MessageArea({ socketData, messageHandlerRef }) {
                 );
                 })
               )}
-              <div ref={messagesEndRef} />
+              
+              {/* Scroll anchor with proper spacing */}
+              <div className="h-16 sm:h-20"></div>
+              <div ref={messagesEndRef} className="h-8"></div>
               
               {/* WhatsApp-like scroll to bottom button with unread count */}
               {showScrollToBottom && (
-                <div className="absolute bottom-20 right-4 z-10">                  <button
+                <div className={`absolute ${isMobile ? 'bottom-40' : 'bottom-36'} right-4 z-10`}>                  <button
                     onClick={scrollToBottom}
                     className="scroll-to-bottom bg-pastel-rose dark:bg-[#39ff14] text-white dark:text-[#181c2f] rounded-full p-3 shadow-lg hover:scale-110 transition-all duration-200 flex items-center gap-2"
                   >
@@ -785,7 +798,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
               
               {/* Unread messages indicator */}
               {unreadMessageCount > 0 && !showScrollToBottom && (
-                <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
+                <div className={`absolute ${isMobile ? 'bottom-40' : 'bottom-36'} left-1/2 transform -translate-x-1/2 z-10`}>
                   <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-mono shadow-lg">
                     {unreadMessageCount} unread message{unreadMessageCount > 1 ? 's' : ''}
                   </div>

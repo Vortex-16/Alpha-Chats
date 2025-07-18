@@ -33,6 +33,20 @@ const userSchema=new mongoose.Schema({
     isOnline: {
         type: Boolean,
         default: false
+    },
+    // Password reset fields
+    passwordResetCode: {
+        type: String,
+        select: false // Don't include in queries by default
+    },
+    passwordResetExpiry: {
+        type: Date,
+        select: false
+    },
+    passwordResetAttempts: {
+        type: Number,
+        default: 0,
+        select: false
     }
 },{timestamps:true})
 

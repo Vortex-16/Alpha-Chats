@@ -138,6 +138,17 @@ function Login() {
               >
                 {loading ? "Initializing..." : "Access Granted"}
               </button>
+              
+              {/* Forgot Password Link */}
+              <div className='w-full flex justify-center mt-2'>
+                <button 
+                  onClick={() => navigate("/forgot-password")}
+                  className='text-pastel-muted dark:text-[#b3b3ff] hover:text-pastel-rose dark:hover:text-[#39ff14] font-mono text-sm underline focus:outline-none bg-transparent border-none cursor-pointer transition min-h-[44px] touch-manipulation'
+                  aria-label="Reset forgotten password"
+                >
+                  🔐 Forgot Password?
+                </button>
+              </div>
             </form>
             <div className='w-full flex justify-center items-center pb-4'>
               <span className='text-pastel-muted dark:text-[#b3b3ff] font-mono'>Need access credentials?</span>
