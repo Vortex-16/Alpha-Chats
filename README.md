@@ -142,3 +142,6 @@ Found a bug? Have a feature idea? Contributions welcome!
 *⭐ Star this repo if you find it useful!*
 
 </div>
+
+
+*Used Ai For Some Part Of The Frontend 
