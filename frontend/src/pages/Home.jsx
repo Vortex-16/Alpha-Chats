@@ -1,11 +1,15 @@
-import React, { useCallback, useRef, useEffect, useState } from 'react'
+import React, { useCallback, useRef, useEffect, useState, Suspense } from 'react'
 import SideBar from '../components/SideBar'
 import MessageArea from '../components/MessageArea'
-import useSocket from '../Hooks/useSocket'
 import getOtherUsers from '../Hooks/getOtherUsers'
 import { getBrowserCompatibilityMessage } from '../utils/connectionDiagnostics'
 import { getBrowserInfo, logBrowserInfo } from '../utils/browserDetection'
 import '../utils/debugOnlineUsersFlow.js'
+
+// Lazy load useSocket to prevent circular dependencies
+const useSocket = React.lazy(() => 
+  import('../Hooks/useSocket').then(module => ({ default: module.default }))
+)
 
 function Home() {
   // Create a ref to pass the message handler from MessageArea to the socket
@@ -21,8 +25,34 @@ function Home() {
     }
   }, []);
 
-  // Single socket connection for the entire app
-  const socketData = useSocket(handleNewMessage);
+  // State for socket data
+  const [socketData, setSocketData] = useState({ isConnected: false, onlineUsers: [], typingUsers: [] })
+  const [SocketHook, setSocketHook] = useState(null)
+
+  // Load socket hook dynamically
+  useEffect(() => {
+    const loadSocket = async () => {
+      try {
+        const { default: useSocketHook } = await import('../Hooks/useSocket')
+        setSocketHook(() => useSocketHook)
+      } catch (error) {
+        console.error('Failed to load socket hook:', error)
+      }
+    }
+    loadSocket()
+  }, [])
+
+  // Initialize socket when hook is loaded
+  useEffect(() => {
+    if (SocketHook) {
+      try {
+        const data = SocketHook(handleNewMessage)
+        setSocketData(data)
+      } catch (error) {
+        console.error('Failed to initialize socket:', error)
+      }
+    }
+  }, [SocketHook, handleNewMessage])
 
   // Fetch other users (this was missing!)
   getOtherUsers();

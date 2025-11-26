@@ -23,7 +23,9 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           icons: ['react-icons'],
-          syntax: ['react-syntax-highlighter']
+          syntax: ['react-syntax-highlighter'],
+          socket: ['socket.io-client'],
+          redux: ['@reduxjs/toolkit', 'react-redux']
         }
       }
     }
