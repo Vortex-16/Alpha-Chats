@@ -34,7 +34,7 @@ class SocketManager {
     this.userId = userId
 
     // Use environment variable or fallback to provided URL
-    const finalSocketUrl = socketUrl || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:4000'
+    const finalSocketUrl = socketUrl || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'https://alpha-chats-new.onrender.com'
     console.log('🔧 Socket URL:', finalSocketUrl)
 
     // Get browser-specific socket configuration

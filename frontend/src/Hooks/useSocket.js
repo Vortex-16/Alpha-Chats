@@ -4,7 +4,7 @@ import { socketManager } from './socketManager'
 
 const useSocket = (onMessageReceived) => {
   const { userData } = useSelector(state => state.user)
-  const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000"
+  const socketUrl = import.meta.env.VITE_SOCKET_URL || "https://alpha-chats-new.onrender.com"
   const [socketStatus, setSocketStatus] = useState(socketManager.getStatus())
   // Handle socket events from global manager
   const handleSocketEvent = useCallback((event, data) => {

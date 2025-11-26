@@ -8,13 +8,13 @@ const getServerUrl = () => {
     return envUrl.replace(/\/+$/, ''); // Remove trailing slashes
   }
   
-  // Development fallback
+  // Development fallback - use Render URL if local server not available
   if (!import.meta.env.PROD) {
-    return "http://localhost:4000";
+    return "https://alpha-chats-new.onrender.com";
   }
   
-  // Production fallback (same origin)
-  return window.location.origin;
+  // Production fallback
+  return "https://alpha-chats-new.onrender.com";
 };
 
 export const serverUrl = getServerUrl();
