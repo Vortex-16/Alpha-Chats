@@ -49,8 +49,13 @@ const getCurrentUser = () => {
                 dispatch(setLoadingAuth(false));
             }
         }
-        fetchUser()
-    }, [dispatch])
+        // Only fetch if we don't have userData yet
+        if (!userData) {
+            fetchUser()
+        } else {
+            dispatch(setLoadingAuth(false));
+        }
+    }, [dispatch, userData])
     
     return userData
 }

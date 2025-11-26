@@ -11,14 +11,14 @@ import { useTheme } from '../components/ThemeContext';
 
 function Profile() {
   const { theme } = useTheme();
-  let {userData} = useSelector(state => state.user)
-  let dispatch = useDispatch()
-  let navigate = useNavigate();
-  let [name, setName] = useState(userData?.name || "")
-  let [frontendImage, setFrontendImage] = useState(userData?.image || dp)
-  let [backendImage, setBackendImage] = useState(null)
-  let image = useRef();
-  let [saving, setSaving] = useState(false);
+  const {userData} = useSelector(state => state.user)
+  const dispatch = useDispatch()
+  const navigate = useNavigate();
+  const [name, setName] = useState(userData?.name || "")
+  const [frontendImage, setFrontendImage] = useState(userData?.image || dp)
+  const [backendImage, setBackendImage] = useState(null)
+  const image = useRef();
+  const [saving, setSaving] = useState(false);
   
   // Debug: Log the userData.image to see what we're getting
   console.log('👤 Profile - userData.image:', userData?.image)

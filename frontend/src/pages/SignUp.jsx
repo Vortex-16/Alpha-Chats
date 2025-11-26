@@ -10,14 +10,14 @@ import { AuthManager } from '../utils/auth'
 
 function SignUp() {
       const { theme } = useTheme();
-      let navigate = useNavigate();
-      let [show,setShow] = useState(false)
-      let [userName,setUserName]= useState("")
-      let [github,setGithub]= useState("")
-      let [password,setPassword]= useState("")
-      let [loading,setLoading]= useState(false)
-      let [error,setError]= useState("")
-      let dispatch = useDispatch()
+      const navigate = useNavigate();
+      const [show, setShow] = useState(false)
+      const [userName, setUserName] = useState("")
+      const [github, setGithub] = useState("")
+      const [password, setPassword] = useState("")
+      const [loading, setLoading] = useState(false)
+      const [error, setError] = useState("")
+      const dispatch = useDispatch()
 
       const validateForm = () => {
         if (!userName.trim()) {

@@ -11,12 +11,12 @@ import { AuthManager } from '../utils/auth'
 function Login() {
   const { theme } = useTheme();
   const [show, setShow] = useState(false);
-  let navigate = useNavigate();
-  let [github,setGithub]= useState("")
-  let [password,setPassword]= useState("")
-  let [error, setError] = useState("");
-  let [loading,setLoading]= useState(false)
-  let dispatch = useDispatch()
+  const navigate = useNavigate();
+  const [github, setGithub] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false)
+  const dispatch = useDispatch()
   const validateForm = () => {
     if (!github.trim()) {
       setError("GitHub username is required")

@@ -14,14 +14,14 @@ import { debounce, isMobileDevice } from '../utils/mobileOptimizations';
 import { AuthManager } from '../utils/auth';
 
 function SideBar({ onlineUsers = [], isConnected = false }) {
-    let {userData,otherUsers,selectedUser,messages} = useSelector(state => state.user)
-    let [search, setSearch] = useState(false)
-    let [searchTerm, setSearchTerm] = useState("")
-    let [activeTab, setActiveTab] = useState('chats')
-    let [isLoadingUsers, setIsLoadingUsers] = useState(false)
-    let [connectionError, setConnectionError] = useState(false)
-    let dispatch = useDispatch()
-    let navigate = useNavigate()
+    const {userData, otherUsers, selectedUser, messages} = useSelector(state => state.user)
+    const [search, setSearch] = useState(false)
+    const [searchTerm, setSearchTerm] = useState("")
+    const [activeTab, setActiveTab] = useState('chats')
+    const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+    const [connectionError, setConnectionError] = useState(false)
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
     const { theme, toggleTheme } = useTheme();
       // Socket data is now passed as props
     console.log('📡 SideBar - Socket connected:', isConnected, 'Online users:', onlineUsers.length);
