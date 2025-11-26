@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom';
-import { serverUrl } from '../config/constants';
-import { setUserData } from '../redux/userSlice';
-import { useDispatch } from 'react-redux';
-import { FaUserPlus, FaCode } from 'react-icons/fa';
-import { useTheme } from '../components/ThemeContext';
-import { AuthManager } from '../utils/auth';
+import { useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { FaUserPlus, FaCode } from 'react-icons/fa'
+import { serverUrl } from '../config/constants'
+import { setUserData } from '../redux/userSlice'
+import { useTheme } from '../components/ThemeContext'
+import { AuthManager } from '../utils/auth'
 
 function SignUp() {
       const { theme } = useTheme();

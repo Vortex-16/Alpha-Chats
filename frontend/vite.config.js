@@ -16,7 +16,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
+    sourcemap: true, // Enable sourcemaps for better debugging
     rollupOptions: {
       output: {
         manualChunks: {
@@ -27,6 +27,20 @@ export default defineConfig({
           socket: ['socket.io-client'],
           redux: ['@reduxjs/toolkit', 'react-redux']
         }
+      }
+    },
+    // Increase chunk size warnings threshold
+    chunkSizeWarningLimit: 1000,
+    // Better minification options
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false, // Keep console logs for debugging
+        drop_debugger: false
+      },
+      mangle: {
+        keep_fnames: true, // Keep function names for better error traces
+        reserved: ['React', 'ReactDOM'] // Don't mangle React names
       }
     }
   },
