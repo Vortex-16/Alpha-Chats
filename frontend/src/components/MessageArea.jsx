@@ -667,7 +667,9 @@ function MessageArea({ socketData, messageHandlerRef }) {
                       src={selectedUser?.image || dp} 
                       alt="Profile" 
                       className='w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-pastel-rose dark:border-[#39ff14] shadow-lg cursor-pointer hover:scale-105 transition-transform' 
-                      onContextMenu={(e) => e.preventDefault()} // Prevent right-click download
+                      onContextMenu={(e) => e.preventDefault()}
+                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
                     />
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 dark:bg-[#39ff14] rounded-full border-2 border-white dark:border-[#23234a] animate-pulse"></div>
                   </div>                  <div className="flex-1 min-w-0 mr-2">
@@ -806,7 +808,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'}`}>
                       <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'} ${isUnread ? 'ring-2 ring-pastel-coral dark:ring-[#ff6f3c] ring-opacity-70' : ''}`}>
                         {/* Message content */}                        {msg.image && (
-                          <img src={msg.image} alt="attachment" className='max-w-full rounded-lg mb-3 border border-[#39ff14]/30' onContextMenu={(e) => e.preventDefault()} />
+                          <img src={msg.image} alt="attachment" className='max-w-full rounded-lg mb-3 border border-[#39ff14]/30' onContextMenu={(e) => e.preventDefault()} crossOrigin="anonymous" referrerPolicy="no-referrer" />
                         )}
                         
                         {/* Message type header */}

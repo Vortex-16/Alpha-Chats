@@ -16,7 +16,8 @@ const uplodOnCloudinary = async (fileBuffer, originalName) => {
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+        secure: true // Always use HTTPS
     })
 
     try {
@@ -29,6 +30,8 @@ const uplodOnCloudinary = async (fileBuffer, originalName) => {
                     resource_type: 'auto',
                     folder: 'alpha-chats', // Optional: organize uploads in folders
                     public_id: `profile_${Date.now()}`, // Generate unique ID
+                    access_mode: 'public', // Ensure images are publicly accessible
+                    invalidate: true, // Invalidate CDN cache if updating
                 },
                 (error, result) => {
                     if (error) {

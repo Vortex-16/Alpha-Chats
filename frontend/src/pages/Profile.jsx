@@ -123,7 +123,7 @@ function Profile() {
             <div className='flex flex-col items-center'>
               <div className='bg-pastel-lavender dark:bg-[#23234a] rounded-full border-4 border-pastel-rose dark:border-[#39ff14] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/30 relative cursor-pointer hover:scale-105 transition-transform' onClick={() => image.current.click()}>
                 <div className='w-[200px] h-[200px] rounded-full overflow-hidden flex items-center justify-center'>
-                  <img src={frontendImage} alt="Profile" className='h-[100%] w-[100%] object-cover' onContextMenu={(e) => e.preventDefault()} />
+                  <img src={frontendImage} alt="Profile" className='h-[100%] w-[100%] object-cover' onContextMenu={(e) => e.preventDefault()} crossOrigin="anonymous" referrerPolicy="no-referrer" />
                 </div>
                 <div className='absolute bottom-4 right-4 w-[35px] h-[35px] cursor-pointer rounded-full bg-pastel-rose dark:bg-[#39ff14] flex justify-center items-center hover:bg-pastel-coral dark:hover:bg-[#ffe156] transition-all shadow-lg'>
                   <IoCameraOutline className='w-[25px] h-[25px] text-white dark:text-[#181c2f]' />
