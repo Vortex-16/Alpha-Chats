@@ -19,7 +19,9 @@ function Home() {
     if (messageHandlerRef.current) {
       messageHandlerRef.current(newMessage)
     }
-  }, []);  // Single socket connection for the entire app
+  }, []);
+
+  // Single socket connection for the entire app
   const socketData = useSocket(handleNewMessage);
 
   // Fetch other users (this was missing!)
