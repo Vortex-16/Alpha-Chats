@@ -214,6 +214,26 @@ class SocketManager {
       userId: this.userId
     }
   }
+
+  // Register a callback for socket events
+  registerCallback(callback) {
+    if (typeof callback === 'function') {
+      this.callbacks.add(callback)
+      console.log('📝 [SocketManager] Callback registered, total:', this.callbacks.size)
+    }
+  }
+
+  // Unregister a callback
+  unregisterCallback(callback) {
+    if (callback) {
+      this.callbacks.delete(callback)
+      console.log('🗑️ [SocketManager] Callback unregistered, total:', this.callbacks.size)
+    } else {
+      // If no specific callback provided, clear all
+      this.callbacks.clear()
+      console.log('🧹 [SocketManager] All callbacks cleared')
+    }
+  }
 }
 
 // Export singleton instance

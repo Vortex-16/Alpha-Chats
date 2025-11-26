@@ -1,21 +1,28 @@
-import React, { useCallback, useRef, useEffect, useState, Suspense } from 'react'
+import React, { useCallback, useRef, useEffect, useState } from 'react'
 import SideBar from '../components/SideBar'
 import MessageArea from '../components/MessageArea'
 import getOtherUsers from '../Hooks/getOtherUsers'
+import getCurrentUser from '../Hooks/getCurrentUser'
+import { useSelector } from 'react-redux'
 import { getBrowserCompatibilityMessage } from '../utils/connectionDiagnostics'
 import { getBrowserInfo, logBrowserInfo } from '../utils/browserDetection'
+import { socketManager } from '../Hooks/socketManager'
 import '../utils/debugOnlineUsersFlow.js'
 
-// Lazy load useSocket to prevent circular dependencies
-const useSocket = React.lazy(() => 
-  import('../Hooks/useSocket').then(module => ({ default: module.default }))
-)
-
 function Home() {
+  // Get current user from Redux
+  const { userData } = useSelector(state => state.user)
+  
   // Create a ref to pass the message handler from MessageArea to the socket
   const messageHandlerRef = useRef(null)
   const [compatibilityMessage, setCompatibilityMessage] = useState(null)
   const [showCompatibilityAlert, setShowCompatibilityAlert] = useState(false)
+  
+  // Socket state
+  const [socketData, setSocketData] = useState({ isConnected: false, onlineUsers: [], typingUsers: [] })
+  
+  // Initialize user data fetching
+  getCurrentUser()
   
   // Socket message handler that will be called by useSocket
   const handleNewMessage = useCallback((newMessage) => {
@@ -25,34 +32,51 @@ function Home() {
     }
   }, []);
 
-  // State for socket data
-  const [socketData, setSocketData] = useState({ isConnected: false, onlineUsers: [], typingUsers: [] })
-  const [SocketHook, setSocketHook] = useState(null)
-
-  // Load socket hook dynamically
-  useEffect(() => {
-    const loadSocket = async () => {
-      try {
-        const { default: useSocketHook } = await import('../Hooks/useSocket')
-        setSocketHook(() => useSocketHook)
-      } catch (error) {
-        console.error('Failed to load socket hook:', error)
-      }
-    }
-    loadSocket()
+  // Update socket status from manager
+  const updateSocketStatus = useCallback(() => {
+    const status = socketManager.getStatus()
+    setSocketData(status)
   }, [])
 
-  // Initialize socket when hook is loaded
+  // Initialize socket connection directly with manager
   useEffect(() => {
-    if (SocketHook) {
-      try {
-        const data = SocketHook(handleNewMessage)
-        setSocketData(data)
-      } catch (error) {
-        console.error('Failed to initialize socket:', error)
+    if (userData && userData._id) {
+      console.log('🔌 [Home] Initializing socket for user:', userData._id)
+      
+      // Create callback function for this component
+      const socketCallback = (event, data) => {
+        console.log(`🎯 [Home] Socket event: ${event}`, data)
+        switch (event) {
+          case 'connect':
+          case 'disconnect':
+          case 'onlineUsers':
+          case 'userTyping':
+            updateSocketStatus()
+            break
+          case 'newMessage':
+            if (handleNewMessage) {
+              handleNewMessage(data)
+            }
+            break
+        }
+      }
+      
+      // Register callback for socket events
+      socketManager.registerCallback(socketCallback)
+      
+      // Initialize socket
+      socketManager.init(userData._id, 'https://alpha-chats-new.onrender.com')
+      
+      // Update initial status
+      updateSocketStatus()
+      
+      // Cleanup on unmount or user change
+      return () => {
+        console.log('🧹 [Home] Cleaning up socket callback')
+        socketManager.unregisterCallback(socketCallback)
       }
     }
-  }, [SocketHook, handleNewMessage])
+  }, [userData, handleNewMessage, updateSocketStatus])
 
   // Fetch other users (this was missing!)
   getOtherUsers();
