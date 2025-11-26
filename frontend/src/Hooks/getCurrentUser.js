@@ -10,14 +10,21 @@ const getCurrentUser = () => {
     const { userData } = useSelector(state => state.user)
       useEffect(() => {
         const fetchUser = async () => {
+            // Add timeout protection
+            const timeoutId = setTimeout(() => {
+                console.warn('⏱️ [getCurrentUser] Request timeout, stopping loading...');
+                dispatch(setLoadingAuth(false));
+            }, 15000); // 15 second timeout
+            
             try {
                 dispatch(setLoadingAuth(true));
                 
                 // Check if we have any authentication data before making the request
                 if (!AuthManager.isAuthenticated()) {
-                    console.log('� [getCurrentUser] No authentication data found, skipping fetch');
+                    console.log('🚫 [getCurrentUser] No authentication data found, skipping fetch');
                     dispatch(setUserData(null));
                     dispatch(setLoadingAuth(false));
+                    clearTimeout(timeoutId);
                     return;
                 }
 
@@ -38,6 +45,7 @@ const getCurrentUser = () => {
                 // Clear user data on authentication failure
                 dispatch(setUserData(null));
             } finally {
+                clearTimeout(timeoutId);
                 dispatch(setLoadingAuth(false));
             }
         }

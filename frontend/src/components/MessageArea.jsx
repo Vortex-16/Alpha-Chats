@@ -249,7 +249,8 @@ function MessageArea({ socketData, messageHandlerRef }) {
     setFetchingMessages(true)
     try {
       const result = await axios.get(`${serverUrl}/api/message/get/${selectedUser._id}`, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000 // 10 second timeout
       })
       
       const fetchedMessages = result.data || [];

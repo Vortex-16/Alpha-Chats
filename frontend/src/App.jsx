@@ -15,17 +15,13 @@ const Profile = React.lazy(() => import('./pages/Profile'))
 const NotFound = React.lazy(() => import('./pages/NotFound'))
 
 function App() {
-  // Use hooks properly
+  // Fetch current user data
   getCurrentUser()
-  getOtherUsers()
   
   const { userData, isLoadingAuth } = useSelector(state => state.user)
   
-  // Memoize the loading check to prevent unnecessary re-renders
-  const isLoading = useMemo(() => isLoadingAuth, [isLoadingAuth])
-  
   // Show loading screen while checking authentication
-  if (isLoading) {
+  if (isLoadingAuth) {
     return <LoadingPage message="Checking authentication..." />
   }
 

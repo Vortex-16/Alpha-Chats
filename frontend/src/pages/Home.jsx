@@ -21,8 +21,8 @@ function Home() {
   // Socket state
   const [socketData, setSocketData] = useState({ isConnected: false, onlineUsers: [], typingUsers: [] })
   
-  // Initialize user data fetching
-  getCurrentUser()
+  // Fetch other users when component mounts
+  getOtherUsers()
   
   // Socket message handler that will be called by useSocket
   const handleNewMessage = useCallback((newMessage) => {
@@ -64,11 +64,12 @@ function Home() {
       // Register callback for socket events
       socketManager.registerCallback(socketCallback)
       
-      // Initialize socket
-      socketManager.init(userData._id, 'https://alpha-chats-new.onrender.com')
-      
-      // Update initial status
-      updateSocketStatus()
+      // Initialize socket in next tick to not block rendering
+      setTimeout(() => {
+        socketManager.init(userData._id, 'https://alpha-chats-new.onrender.com')
+        // Update initial status
+        updateSocketStatus()
+      }, 0)
       
       // Cleanup on unmount or user change
       return () => {
@@ -77,9 +78,6 @@ function Home() {
       }
     }
   }, [userData, handleNewMessage, updateSocketStatus])
-
-  // Fetch other users (this was missing!)
-  getOtherUsers();
 
   // Debug socket data flow
   useEffect(() => {
