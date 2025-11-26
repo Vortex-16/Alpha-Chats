@@ -16,19 +16,25 @@ import { debounce, isMobileDevice, optimizeForMobile } from '../utils/mobileOpti
 
 function MessageArea({ socketData, messageHandlerRef }) {
   const { theme } = useTheme();
-  let {selectedUser, userData, messages} = useSelector(state => state.user)
-  let dispatch = useDispatch()
+  const { selectedUser, userData, messages } = useSelector(state => state.user)
+  const dispatch = useDispatch()
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
   const [fetchingMessages, setFetchingMessages] = useState(false)
   const [inputMode, setInputMode] = useState('text'); // 'text', 'code', 'terminal'
   const [codeLang, setCodeLang] = useState('javascript');
   const [showTemplates, setShowTemplates] = useState(false);
-    // Mobile detection with optimization
+  // WhatsApp-like smart scroll behavior states
+  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+  // Mobile detection with optimization
   const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 640);
   const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null)
+  const messagesContainerRef = useRef(null);
   const selectedUserRef = useRef(selectedUser)
   const startTypingRef = useRef()
   const stopTypingRef = useRef()
@@ -278,12 +284,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
     } finally {
       setFetchingMessages(false)
     }
-  }, [selectedUser?._id, dispatch, userData?._id]) // Removed messages dependency  // WhatsApp-like smart scroll behavior
-  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
-  const messagesContainerRef = useRef(null);
+  }, [selectedUser?._id, dispatch, userData?._id]) // Removed messages dependency
 
   // Check if user is at bottom of chat
   const checkIfAtBottom = useCallback(() => {
