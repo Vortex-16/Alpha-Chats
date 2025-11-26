@@ -20,12 +20,21 @@
       "dest": "frontend/dist/assets/$1"
     },
     {
-      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))",
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|json|txt|xml))",
       "dest": "frontend/dist/$1"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
       "dest": "frontend/dist/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "env": {

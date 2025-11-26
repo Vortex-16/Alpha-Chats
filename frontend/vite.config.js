@@ -29,14 +29,20 @@ export default defineConfig({
     }
   },
   server: {
+    port: 5173,
+    historyApiFallback: true,
     proxy: {
       '/api': {
         target: process.env.NODE_ENV === 'production' 
-          ? 'https://your-app-name.vercel.app' 
+          ? 'https://alpha-chats.vercel.app' 
           : 'http://localhost:4000',
         changeOrigin: true,
         secure: true
       }
     }
+  },
+  preview: {
+    port: 4173,
+    historyApiFallback: true
   }
 })
