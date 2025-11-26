@@ -119,6 +119,18 @@ class SocketManager {
       this.notifyCallbacks('newMessage', message)
     })
 
+    // Handle message delivered confirmation
+    this.socket.on('messageDelivered', (data) => {
+      console.log('✓✓ Message delivered:', data)
+      this.notifyCallbacks('messageDelivered', data)
+    })
+
+    // Handle message read confirmation
+    this.socket.on('messageRead', (data) => {
+      console.log('👁 Message read:', data)
+      this.notifyCallbacks('messageRead', data)
+    })
+
     // Add other event listeners...
     this.socket.on('userTyping', (data) => {
       if (data.isTyping) {

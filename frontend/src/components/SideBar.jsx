@@ -189,7 +189,13 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
     
     React.useEffect(() => {
         window.addEventListener('resize', debouncedHandleResize);
-        return () => window.removeEventListener('resize', debouncedHandleResize);
+        return () => {
+            window.removeEventListener('resize', debouncedHandleResize);
+            // Cleanup debounced function
+            if (debouncedHandleResize.cancel) {
+                debouncedHandleResize.cancel();
+            }
+        };
     }, [debouncedHandleResize]);
 
     // On mobile, if a user is selected, hide the sidebar (show only chat)
@@ -330,7 +336,7 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                         )}
                     </div>
                 ) : (
-                    (search ? filteredUsers : otherUsers)?.map((user) => {
+                    (search ? filteredUsers : otherUsers)?.filter(user => user && user._id).map((user) => {
                         const userIsOnline = isUserOnline(user._id);
                         const unreadCount = getUserUnreadCount(user._id);
                         
@@ -391,9 +397,11 @@ function SideBar({ onlineUsers = [], isConnected = false }) {
                                             {userIsOnline ? 'Online' : 'Offline'}
                                         </p>
                                         {unreadCount > 0 && (
-                                            <span className="text-pastel-sage dark:text-[#39ff14] text-xs font-mono flex-shrink-0">
-                                                {unreadCount} new
-                                            </span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="bg-pastel-coral dark:bg-[#ff6f3c] text-white dark:text-white text-xs font-bold font-mono px-2 py-0.5 rounded-full flex-shrink-0 shadow-md animate-pulse">
+                                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                                </span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

@@ -204,9 +204,19 @@ io.on('connection', (socket) => {
         // Send message to recipient ONLY (not to sender)
         io.to(userData.socketId).emit('newMessage', messageData)
         
+        // Mark message as delivered in database if dbId exists
+        if (dbId) {
+          try {
+            await Message.findByIdAndUpdate(dbId, { delivered: true });
+            console.log(`✓ Marked message ${dbId} as delivered in database`);
+          } catch (error) {
+            console.error('Failed to update delivery status:', error);
+          }
+        }
+        
         // Send delivery confirmation to sender
         socket.emit('messageDelivered', {
-          messageId: messageId,
+          messageId: dbId || messageId,
           recipientId,
           timestamp: new Date(),
           status: 'delivered'
@@ -307,8 +317,21 @@ io.on('connection', (socket) => {
   })
 
   // Handle message read receipts
-  socket.on('markAsRead', (data) => {
+  socket.on('markAsRead', async (data) => {
     const { messageId, senderId, recipientId } = data
+    
+    // Update message read status in database
+    if (messageId) {
+      try {
+        await Message.findByIdAndUpdate(messageId, { 
+          read: true,
+          delivered: true 
+        });
+        console.log(`👁 Marked message ${messageId} as read in database`);
+      } catch (error) {
+        console.error('Failed to update read status:', error);
+      }
+    }
     
     // Notify sender that message was read
     const sender = Array.from(onlineUsers.entries())

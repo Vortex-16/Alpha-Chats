@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { IoArrowBack, IoSend } from "react-icons/io5";
+import { IoArrowBack, IoSend, IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
 import { FiMonitor, FiTerminal, FiCode, FiChevronDown } from "react-icons/fi";
 import dp from '../assets/pp.webp'
 import { useDispatch, useSelector } from 'react-redux';
-import { setSelectedUser, setMessages, addMessage, markMessagesAsRead } from '../redux/userSlice';
+import { setSelectedUser, setMessages, addMessage, markMessagesAsRead, updateMessageStatus } from '../redux/userSlice';
 import { markMessagesAsReadAPI, messageUtils } from '../utils/messageUtils';
 import axios from 'axios';
 import { serverUrl } from '../config/constants';
@@ -66,23 +66,25 @@ function MessageArea({ socketData, messageHandlerRef }) {
   useEffect(() => {
     if (isMobile && inputFocused && inputRef.current) {
       // Delay to ensure keyboard is fully shown
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         inputRef.current?.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'center',
           inline: 'nearest'
         });
         
-        // Scroll to bottom to ensure the last message is visible
-        if (messagesEndRef.current) {
+        // Only scroll to bottom if user was already at bottom
+        if (isUserAtBottom && messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'smooth',
             block: 'end'
           });
         }
       }, 300);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [inputFocused, isMobile]);
+  }, [inputFocused, isMobile, isUserAtBottom]);
 
   // Prevent zoom on iOS when input is focused
   useEffect(() => {
@@ -131,10 +133,10 @@ function MessageArea({ socketData, messageHandlerRef }) {
     
     // Rule 3: Check for content duplicates (fallback protection)
     const isDuplicate = currentMessages?.some(existingMsg => 
-      existingMsg.message === newMessage.message &&
+      existingMsg && existingMsg.message === newMessage.message &&
       existingMsg.sender === newMessage.senderId &&
       (existingMsg.recipientId === newMessage.recipientId || existingMsg.reciver === newMessage.recipientId) &&
-      Math.abs(new Date(existingMsg.createdAt || existingMsg.timestamp) - new Date(newMessage.timestamp)) < 3000
+      Math.abs(new Date(existingMsg.createdAt || existingMsg.timestamp || Date.now()) - new Date(newMessage.timestamp || Date.now())) < 3000
     );
     
     if (isDuplicate) {
@@ -199,6 +201,41 @@ function MessageArea({ socketData, messageHandlerRef }) {
     startTypingRef.current = startTyping
     stopTypingRef.current = stopTyping
   }, [startTyping, stopTyping])
+
+  // Handle message delivery and read status updates
+  useEffect(() => {
+    if (!socketData?.socket) return;
+
+    const handleMessageDelivered = (data) => {
+      console.log('✓✓ Message delivered:', data);
+      dispatch(updateMessageStatus({ 
+        messageId: data.messageId, 
+        status: 'delivered' 
+      }));
+    };
+
+    const handleMessageRead = (data) => {
+      console.log('👁 Message read:', data);
+      dispatch(updateMessageStatus({ 
+        messageId: data.messageId, 
+        status: 'read' 
+      }));
+    };
+
+    // Subscribe to socket events via socketManager
+    const unsubscribeDelivered = socketData.socket?.on ? 
+      (socketData.socket.on('messageDelivered', handleMessageDelivered), () => socketData.socket?.off('messageDelivered', handleMessageDelivered)) : 
+      () => {};
+    
+    const unsubscribeRead = socketData.socket?.on ? 
+      (socketData.socket.on('messageRead', handleMessageRead), () => socketData.socket?.off('messageRead', handleMessageRead)) : 
+      () => {};
+
+    return () => {
+      if (typeof unsubscribeDelivered === 'function') unsubscribeDelivered();
+      if (typeof unsubscribeRead === 'function') unsubscribeRead();
+    };
+  }, [socketData?.socket, dispatch])
   const fetchMessages = useCallback(async () => {
     if (!selectedUser?._id) return
     
@@ -216,14 +253,20 @@ function MessageArea({ socketData, messageHandlerRef }) {
       // Use messagesRef to avoid dependency on messages state
       const currentMessages = messagesRef.current || [];
       const conversationMessages = currentMessages.filter(msg => 
-        (msg.sender === selectedUser._id && msg.reciver === userData?._id) ||
-        (msg.sender === userData?._id && msg.reciver === selectedUser._id)
+        msg && msg.sender && msg.reciver && (
+          (msg.sender === selectedUser._id && msg.reciver === userData?._id) ||
+          (msg.sender === userData?._id && msg.reciver === selectedUser._id)
+        )
       );
       
-      if (conversationMessages.length === 0) {
+      if (conversationMessages.length === 0 && fetchedMessages.length > 0) {
         // Only add messages if this conversation hasn't been loaded yet
         console.log('💬 Loading conversation for first time, adding messages to global store');
-        fetchedMessages.forEach(msg => dispatch(addMessage(msg)));
+        fetchedMessages.forEach(msg => {
+          if (msg && msg._id) {
+            dispatch(addMessage(msg));
+          }
+        });
       } else {
         console.log('💬 Conversation already loaded, messages exist in global store');
       }
@@ -239,6 +282,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
   const messagesContainerRef = useRef(null);
 
   // Check if user is at bottom of chat
@@ -246,7 +290,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
     if (!messagesContainerRef.current) return false;
     
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold for better detection
     
     setIsUserAtBottom(isAtBottom);
     setShowScrollToBottom(!isAtBottom && currentConversationMessages.length > 0);
@@ -263,7 +307,8 @@ function MessageArea({ socketData, messageHandlerRef }) {
       checkIfAtBottom();
     };
 
-    container.addEventListener('scroll', handleScroll);
+    // Use passive event listener for better scroll performance
+    container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [checkIfAtBottom]);
 
@@ -275,21 +320,23 @@ function MessageArea({ socketData, messageHandlerRef }) {
     const isMyMessage = lastMessage?.sender === userData?._id;
     
     // Count unread messages
-    const unreadCount = currentConversationMessages.filter(msg => 
+    const unreadMessages = currentConversationMessages.filter(msg => 
       msg.sender === selectedUser?._id && 
       msg.reciver === userData?._id && 
       !msg.read
-    ).length;
+    );
+    const unreadCount = unreadMessages.length;
     
     setUnreadMessageCount(unreadCount);
 
     // WhatsApp-like scroll behavior:
     // 1. Always scroll for my own messages
     // 2. Only scroll for others' messages if user is already at bottom
-    // 3. If there are unread messages and user not at bottom, scroll to first unread
+    // 3. If there are unread messages, scroll to first unread (only once per conversation)
     
     if (isMyMessage || isUserAtBottom) {
       // Scroll to bottom for my messages or if user is already at bottom
+      setHasScrolledToUnread(false);
       setTimeout(() => {
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
@@ -298,42 +345,73 @@ function MessageArea({ socketData, messageHandlerRef }) {
           });
         }
       }, 100);
-    } else if (unreadCount > 0 && !isUserAtBottom) {
+    } else if (unreadCount > 0 && !hasScrolledToUnread) {
       // Find first unread message and scroll to it
-      const firstUnreadMessage = currentConversationMessages.find(msg => 
-        msg.sender === selectedUser?._id && 
-        msg.reciver === userData?._id && 
-        !msg.read
-      );
+      const firstUnreadMessage = unreadMessages[0];
       
-      if (firstUnreadMessage) {
+      if (firstUnreadMessage?._id) {
+        setHasScrolledToUnread(true);
         setTimeout(() => {
           const messageElement = document.querySelector(`[data-message-id="${firstUnreadMessage._id}"]`);
           if (messageElement) {
             messageElement.scrollIntoView({ 
               behavior: "smooth",
-              block: "start"
+              block: "center"
             });
+            console.log('📍 Scrolled to first unread message:', firstUnreadMessage._id);
+          } else {
+            console.warn('⚠️ Could not find unread message element:', firstUnreadMessage._id);
           }
-        }, 100);
+        }, 300);
       }
     }
-  }, [currentConversationMessages.length, selectedUser?._id, userData?._id, isUserAtBottom]);
+  }, [currentConversationMessages.length, selectedUser?._id, userData?._id, isUserAtBottom, hasScrolledToUnread]);
 
   // Initial scroll when switching users
   useEffect(() => {
     if (selectedUser?._id) {
-      // Always scroll to bottom when switching users
+      setHasScrolledToUnread(false);
+      
+      // Check for unread messages in the conversation
       setTimeout(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ 
-            behavior: "instant",
-            block: "end"
-          });
+        const unreadMessages = currentConversationMessages.filter(msg => 
+          msg.sender === selectedUser._id && 
+          msg.reciver === userData?._id && 
+          !msg.read
+        );
+        
+        if (unreadMessages.length > 0 && unreadMessages[0]?._id) {
+          // Scroll to first unread message
+          const firstUnreadMessage = unreadMessages[0];
+          const messageElement = document.querySelector(`[data-message-id="${firstUnreadMessage._id}"]`);
+          if (messageElement) {
+            messageElement.scrollIntoView({ 
+              behavior: "smooth",
+              block: "center"
+            });
+            setHasScrolledToUnread(true);
+            console.log('📍 Initial scroll to first unread message');
+          } else {
+            // Fallback to bottom if element not found
+            if (messagesEndRef.current) {
+              messagesEndRef.current.scrollIntoView({ 
+                behavior: "instant",
+                block: "end"
+              });
+            }
+          }
+        } else {
+          // No unread messages, scroll to bottom
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ 
+              behavior: "instant",
+              block: "end"
+            });
+          }
         }
-        setIsUserAtBottom(true);
+        setIsUserAtBottom(unreadMessages.length === 0);
         setShowScrollToBottom(false);
-      }, 200);
+      }, 400);
     }
   }, [selectedUser?._id]);
   // Scroll to bottom function for the button
@@ -348,14 +426,16 @@ function MessageArea({ socketData, messageHandlerRef }) {
     setIsUserAtBottom(true);
     
     // Mark messages as read when manually scrolling to bottom
-    if (unreadMessageCount > 0) {
+    if (unreadMessageCount > 0 && selectedUser?._id) {
       try {
         await markMessagesAsReadAPI(selectedUser._id);
         dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
       } catch (error) {
         console.error('Failed to mark messages as read on scroll:', error);
         // Still update local state even if API fails
-        dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+        if (selectedUser?._id) {
+          dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+        }
       }
     }
   };
@@ -371,7 +451,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
       if (selectedUser?._id && currentConversationMessages.length > 0 && !fetchingMessages && markAsRead) {
         // Check how many unread messages we have before marking as read
         const unreadMessages = currentConversationMessages.filter(msg => 
-          msg.sender === selectedUser._id && 
+          msg && msg.sender === selectedUser._id && 
           msg.reciver === userData?._id && 
           !msg.read
         );
@@ -382,58 +462,62 @@ function MessageArea({ socketData, messageHandlerRef }) {
           // Mark messages as read via API (for persistent database update)
           try {
             await markMessagesAsReadAPI(selectedUser._id);
+            
+            // Mark messages as read via socket (for real-time updates)
+            if (markAsRead && typeof markAsRead === 'function') {
+              markAsRead(selectedUser._id);
+            }
+            
+            // Also mark messages as read in local state immediately (for instant UI update)
+            dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
+            
+            console.log(`✅ [MESSAGE AREA] Messages marked as read for user:`, selectedUser._id);
           } catch (error) {
-            console.error('Failed to mark messages as read on server:', error);
+            console.error('Failed to mark messages as read:', error);
+            // Still update local state even if API/socket fails
+            dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
           }
-          
-          // Mark messages as read via socket (for real-time updates)
-          if (markAsRead) {
-            markAsRead(selectedUser._id);
-          }
-          
-          // Also mark messages as read in local state immediately (for instant UI update)
-          dispatch(markMessagesAsRead({ senderId: selectedUser._id }));
-          
-          console.log(`✅ [MESSAGE AREA] Messages marked as read for user:`, selectedUser._id);
         } else {
           console.log(`ℹ️ [MESSAGE AREA] No unread messages to mark for user:`, selectedUser._id);
         }
       }
     };
     
-    markAsReadAsync();
-  }, [selectedUser?._id, currentConversationMessages, fetchingMessages, markAsRead, dispatch]) // Added currentConversationMessages to trigger on any message change
+    // Debounce the mark as read to avoid too many API calls
+    const timeoutId = setTimeout(markAsReadAsync, 500);
+    return () => clearTimeout(timeoutId);
+  }, [selectedUser?._id, currentConversationMessages.length, fetchingMessages, markAsRead, dispatch, userData?._id])
   
   // Typing indicator timer
   useEffect(() => {
-    let typingTimer
-    const currentSelectedUser = selectedUserRef.current
-    const startTypingFn = startTypingRef.current
-    const stopTypingFn = stopTypingRef.current
+    let typingTimer;
+    const currentSelectedUser = selectedUserRef.current;
+    const startTypingFn = startTypingRef.current;
+    const stopTypingFn = stopTypingRef.current;
     
     if (message.trim() && currentSelectedUser?._id && startTypingFn) {
-      startTypingFn(currentSelectedUser._id)
-      
-      // Clear previous timer
-      clearTimeout(typingTimer)
+      startTypingFn(currentSelectedUser._id);
       
       // Set new timer to stop typing after 2 seconds of inactivity
       typingTimer = setTimeout(() => {
         if (stopTypingFn && currentSelectedUser?._id) {
-          stopTypingFn(currentSelectedUser._id)
+          stopTypingFn(currentSelectedUser._id);
         }
-      }, 2000)
-    } else if (currentSelectedUser?._id && stopTypingFn) {
-      stopTypingFn(currentSelectedUser._id)
+      }, 2000);
+    } else if (!message.trim() && currentSelectedUser?._id && stopTypingFn) {
+      stopTypingFn(currentSelectedUser._id);
     }
 
     return () => {
-      clearTimeout(typingTimer)
-      if (currentSelectedUser?._id && stopTypingFn) {
-        stopTypingFn(currentSelectedUser._id)
+      if (typingTimer) {
+        clearTimeout(typingTimer);
       }
-    }
-  }, [message]) // Only depend on message
+      // Stop typing when component unmounts or message clears
+      if (!message.trim() && currentSelectedUser?._id && stopTypingFn) {
+        stopTypingFn(currentSelectedUser._id);
+      }
+    };
+  }, [message])
   
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -668,6 +752,21 @@ function MessageArea({ socketData, messageHandlerRef }) {
                 minHeight: '400px'
               }}
             >
+              {/* Scroll to Bottom Button */}
+              {showScrollToBottom && (
+                <button
+                  onClick={scrollToBottom}
+                  className="fixed bottom-24 right-8 z-30 bg-pastel-rose dark:bg-[#39ff14] text-white dark:text-[#181c2f] rounded-full p-3 shadow-lg hover:scale-110 transition-all duration-200 flex items-center gap-2"
+                  aria-label="Scroll to bottom"
+                >
+                  <FiChevronDown className="w-5 h-5" />
+                  {unreadMessageCount > 0 && (
+                    <span className="bg-white dark:bg-[#181c2f] text-pastel-rose dark:text-[#39ff14] text-xs font-bold px-2 py-0.5 rounded-full">
+                      {unreadMessageCount}
+                    </span>
+                  )}
+                </button>
+              )}
               {fetchingMessages ? (
                 <div className='flex items-center justify-center h-full'>
                   <div className="bg-pastel-cream dark:bg-[#23234a] rounded-xl p-8 border border-pastel-rose dark:border-[#39ff14]/30 shadow-lg">
@@ -686,18 +785,26 @@ function MessageArea({ socketData, messageHandlerRef }) {
                     <div className="mt-6 text-pastel-rose dark:text-[#39ff14] font-mono text-xs sm:text-sm opacity-60">// No messages in buffer</div>
                   </div>
                 </div>              ) : (
-                currentConversationMessages.map((msg, index) => {
+                currentConversationMessages.filter(msg => msg && msg._id).map((msg, index) => {
                   const isUnread = msg.sender === selectedUser?._id && msg.reciver === userData?._id && !msg.read;
                   
                   return (
                   <div 
                     key={msg._id || index} 
                     data-message-id={msg._id}
-                    className={`flex ${msg.sender === userData._id ? 'justify-end' : 'justify-start'} ${
-                      isUnread ? 'animate-pulse-subtle' : ''
-                    } mb-4 sm:mb-6`}
-                  >                    <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'} ${isUnread ? 'unread-message' : ''}`}>
-                      <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'} ${isUnread ? 'ring-2 ring-red-400 ring-opacity-50' : ''}`}>
+                    className={`flex ${msg.sender === userData._id ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 scroll-mt-24`}
+                  >
+                    {isUnread && msg.sender !== userData._id && (
+                      <div className="absolute left-0 right-0 flex items-center gap-2 mb-2">
+                        <div className="flex-1 h-px bg-pastel-coral dark:bg-[#ff6f3c]"></div>
+                        <span className="bg-pastel-coral dark:bg-[#ff6f3c] text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                          New Messages
+                        </span>
+                        <div className="flex-1 h-px bg-pastel-coral dark:bg-[#ff6f3c]"></div>
+                      </div>
+                    )}
+                    <div className={`max-w-[90vw] sm:max-w-[75%] ${msg.sender === userData._id ? 'order-2' : 'order-1'}`}>
+                      <div className={`p-3 sm:p-4 rounded-2xl font-mono relative ${msg.sender === userData._id ? 'bg-gradient-to-r from-pastel-rose to-pastel-coral dark:from-[#39ff14] dark:to-[#2dd60a] text-white dark:text-[#181c2f] shadow-lg shadow-pastel-rose/30 dark:shadow-[#39ff14]/20' : 'bg-pastel-cream dark:bg-[#23234a] text-pastel-plum dark:text-white border border-pastel-border dark:border-[#39ff14]/20 shadow-lg'} ${msg.sender === userData._id ? 'rounded-br-md' : 'rounded-bl-md'} ${isUnread ? 'ring-2 ring-pastel-coral dark:ring-[#ff6f3c] ring-opacity-70' : ''}`}>
                         {/* Message content */}                        {msg.image && (
                           <img src={msg.image} alt="attachment" className='max-w-full rounded-lg mb-3 border border-[#39ff14]/30' onContextMenu={(e) => e.preventDefault()} />
                         )}
@@ -755,15 +862,19 @@ function MessageArea({ socketData, messageHandlerRef }) {
                         )}
                         
                         {/* Timestamp and status */}
-                        <div className={`flex items-center justify-between mt-2 pt-2 border-t ${msg.sender === userData._id ? 'border-white/20 dark:border-[#181c2f]/20' : 'border-pastel-border dark:border-[#39ff14]/20'}`}>
+                        <div className={`flex items-center justify-end gap-2 mt-2 pt-2 border-t ${msg.sender === userData._id ? 'border-white/20 dark:border-[#181c2f]/20' : 'border-pastel-border dark:border-[#39ff14]/20'}`}>
                           <p className={`text-xs font-mono ${msg.sender === userData._id ? 'text-white/70 dark:text-[#181c2f]/70' : 'text-pastel-muted dark:text-[#b3b3ff]'}`}>
-                            {new Date(msg.createdAt).toLocaleTimeString()}
+                            {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                           {msg.sender === userData._id && (
-                            <div className="flex items-center gap-1">
-                              {msg.delivered && (<span className="text-xs opacity-60">✓</span>)}
-                              {msg.read && (<span className="text-xs opacity-60">✓</span>)}
-                              <span className="text-xs opacity-60">{msg.read ? 'read' : msg.delivered ? 'delivered' : 'sent'}</span>
+                            <div className="flex items-center" title={msg.read ? 'Read' : msg.delivered ? 'Delivered' : 'Sent'}>
+                              {msg.read ? (
+                                <IoCheckmarkDone className={`w-4 h-4 ${msg.sender === userData._id ? 'text-blue-400 dark:text-blue-300' : 'text-pastel-muted'}`} />
+                              ) : msg.delivered ? (
+                                <IoCheckmarkDone className={`w-4 h-4 ${msg.sender === userData._id ? 'text-white/70 dark:text-[#181c2f]/70' : 'text-pastel-muted'}`} />
+                              ) : (
+                                <IoCheckmark className={`w-4 h-4 ${msg.sender === userData._id ? 'text-white/70 dark:text-[#181c2f]/70' : 'text-pastel-muted'}`} />
+                              )}
                             </div>
                           )}
                         </div>

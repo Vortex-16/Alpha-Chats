@@ -86,11 +86,23 @@ const userSlice=createSlice({
                     : msg
             );
         },
+        updateMessageStatus:(state,action)=>{
+            const { messageId, status } = action.payload;
+            const messageIndex = state.messages.findIndex(msg => msg._id === messageId);
+            if (messageIndex !== -1) {
+                if (status === 'delivered') {
+                    state.messages[messageIndex].delivered = true;
+                } else if (status === 'read') {
+                    state.messages[messageIndex].delivered = true;
+                    state.messages[messageIndex].read = true;
+                }
+            }
+        },
         setLoadingAuth:(state,action)=>{
             state.isLoadingAuth = action.payload;
         }
     }
 })
 
-export const {setUserData,setOtherUsers,setSelectedUser,setMessages,addMessage,markMessagesAsRead,setLoadingAuth}=userSlice.actions
+export const {setUserData,setOtherUsers,setSelectedUser,setMessages,addMessage,markMessagesAsRead,updateMessageStatus,setLoadingAuth}=userSlice.actions
 export default userSlice.reducer
