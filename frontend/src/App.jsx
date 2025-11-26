@@ -8,6 +8,7 @@ import Home from './pages/Home'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import ErrorBoundary from './components/ErrorBoundary'
+import { LoadingPage } from './components/LoadingSpinner'
 import getCurrentUser from './Hooks/getCurrentUser'
 import getOtherUsers from './Hooks/getOtherUsers'
 
@@ -16,7 +17,13 @@ function App() {
   getCurrentUser()
   getOtherUsers()
   
-  let {userData}=useSelector(state=>state.user)
+  let {userData, isLoadingAuth}=useSelector(state=>state.user)
+  
+  // Show loading screen while checking authentication
+  if (isLoadingAuth) {
+    return <LoadingPage message="Checking authentication..." />
+  }
+  
   return (
     <ErrorBoundary>
       <Routes>

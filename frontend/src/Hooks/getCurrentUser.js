@@ -2,7 +2,7 @@ import axios from "axios"
 import { useEffect } from "react"
 import { serverUrl } from "../config/constants"
 import { useDispatch, useSelector } from "react-redux"
-import { setUserData } from "../redux/userSlice"
+import { setUserData, setLoadingAuth } from "../redux/userSlice"
 import { AuthManager } from "../utils/auth"
 
 const getCurrentUser = () => {
@@ -11,10 +11,13 @@ const getCurrentUser = () => {
       useEffect(() => {
         const fetchUser = async () => {
             try {
+                dispatch(setLoadingAuth(true));
+                
                 // Check if we have any authentication data before making the request
                 if (!AuthManager.isAuthenticated()) {
                     console.log('� [getCurrentUser] No authentication data found, skipping fetch');
                     dispatch(setUserData(null));
+                    dispatch(setLoadingAuth(false));
                     return;
                 }
 
@@ -34,6 +37,8 @@ const getCurrentUser = () => {
                 console.error("Response data:", error.response?.data);
                 // Clear user data on authentication failure
                 dispatch(setUserData(null));
+            } finally {
+                dispatch(setLoadingAuth(false));
             }
         }
         fetchUser()

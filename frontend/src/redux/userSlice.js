@@ -6,7 +6,8 @@ const userSlice=createSlice({
         userData:null,
         otherUsers:null,
         selectedUser:null,
-        messages:[]
+        messages:[],
+        isLoadingAuth: true
     }, 
     reducers:{
         setUserData:(state,action)=>{
@@ -84,9 +85,12 @@ const userSlice=createSlice({
                     ? { ...msg, read: true }
                     : msg
             );
+        },
+        setLoadingAuth:(state,action)=>{
+            state.isLoadingAuth = action.payload;
         }
     }
 })
 
-export const {setUserData,setOtherUsers,setSelectedUser,setMessages,addMessage,markMessagesAsRead}=userSlice.actions
+export const {setUserData,setOtherUsers,setSelectedUser,setMessages,addMessage,markMessagesAsRead,setLoadingAuth}=userSlice.actions
 export default userSlice.reducer
