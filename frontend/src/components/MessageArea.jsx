@@ -761,7 +761,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
               ref={messagesContainerRef}
               className={`flex-1 overflow-y-auto p-2 sm:p-6 relative`} 
               style={{
-                paddingBottom: isMobile ? (inputFocused ? '200px' : '100px') : '20px',
+                paddingBottom: isMobile ? (inputFocused ? '200px' : '150px') : '20px',
                 scrollBehavior: 'smooth',
                 minHeight: '400px'
               }}
@@ -929,7 +929,7 @@ function MessageArea({ socketData, messageHandlerRef }) {
             </div>
             
             {/* Terminal-style Message Input */}
-            <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-pastel-cream dark:bg-[#181c2f] border-t border-pastel-rose dark:border-[#39ff14]/30 shadow-2xl z-50' : 'bg-pastel-cream dark:bg-[#181c2f] border-t border-pastel-rose dark:border-[#39ff14]/30 shadow-2xl'}`} ref={inputRef}>
+            <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-pastel-cream dark:bg-[#181c2f] border-t border-pastel-rose dark:border-[#39ff14]/30 shadow-2xl z-50' : 'absolute bottom-1 left-2 right-2 sm:bottom-1 sm:left-4 sm:right-4'}`} ref={inputRef}>
               <div className={`${isMobile ? '' : 'bg-pastel-cream dark:bg-[#181c2f] rounded-xl border border-pastel-rose dark:border-[#39ff14]/30 shadow-2xl'} overflow-hidden`}>
                 {/* Terminal header - only show on desktop */}
                 {!isMobile && (
