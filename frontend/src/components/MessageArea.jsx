@@ -892,9 +892,6 @@ function MessageArea({ socketData, messageHandlerRef }) {
                             </div>
                           )}
                         </div>
-                        
-                        {/* Message type indicator */}
-                        <div className={`absolute -bottom-1 ${msg.sender === userData._id ? '-right-1' : '-left-1'} w-3 h-3 transform rotate-45 ${msg.sender === userData._id ? 'bg-pastel-coral dark:bg-[#39ff14]' : 'bg-pastel-cream dark:bg-[#23234a] border-r border-b border-pastel-border dark:border-[#39ff14]/20'}`}></div>
                       </div>
                     </div>                  </div>
                 );
