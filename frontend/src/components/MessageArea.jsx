@@ -40,6 +40,16 @@ function MessageArea({ socketData, messageHandlerRef }) {
   const stopTypingRef = useRef()
   const messagesRef = useRef(messages)
   
+  // Keep messagesRef in sync with messages state to avoid stale closures
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+  
+  // Keep selectedUserRef in sync with selectedUser
+  useEffect(() => {
+    selectedUserRef.current = selectedUser;
+  }, [selectedUser]);
+  
   // Debug inputMode changes
   useEffect(() => {
     if (import.meta.env.DEV) {

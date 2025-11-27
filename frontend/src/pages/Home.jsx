@@ -18,8 +18,17 @@ function Home() {
   const [compatibilityMessage, setCompatibilityMessage] = useState(null)
   const [showCompatibilityAlert, setShowCompatibilityAlert] = useState(false)
   
-  // Socket state
-  const [socketData, setSocketData] = useState({ isConnected: false, onlineUsers: [], typingUsers: [] })
+  // Socket state - includes status and socket functions
+  const [socketData, setSocketData] = useState({ 
+    isConnected: false, 
+    onlineUsers: [], 
+    typingUsers: [],
+    socket: null,
+    sendMessage: null,
+    startTyping: null,
+    stopTyping: null,
+    markAsRead: null
+  })
   
   // Fetch other users when component mounts
   getOtherUsers()
@@ -32,11 +41,41 @@ function Home() {
     }
   }, []);
 
-  // Update socket status from manager
+  // Update socket status from manager - includes socket functions
   const updateSocketStatus = useCallback(() => {
     const status = socketManager.getStatus()
-    setSocketData(status)
-  }, [])
+    setSocketData({
+      ...status,
+      socket: socketManager.socket,
+      sendMessage: (messageData) => socketManager.sendMessage(messageData, userData?._id),
+      startTyping: (recipientId) => {
+        if (socketManager.socket && socketManager.isConnected) {
+          socketManager.socket.emit('typing', {
+            senderId: userData?._id,
+            recipientId,
+            isTyping: true
+          })
+        }
+      },
+      stopTyping: (recipientId) => {
+        if (socketManager.socket && socketManager.isConnected) {
+          socketManager.socket.emit('typing', {
+            senderId: userData?._id,
+            recipientId,
+            isTyping: false
+          })
+        }
+      },
+      markAsRead: (senderId) => {
+        if (socketManager.socket && socketManager.isConnected && userData?._id) {
+          socketManager.socket.emit('markConversationAsRead', {
+            senderId,
+            recipientId: userData._id
+          })
+        }
+      }
+    })
+  }, [userData?._id])
 
   // Initialize socket connection directly with manager
   useEffect(() => {
