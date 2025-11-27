@@ -119,7 +119,7 @@ npm run dev
 **Alternative:** Render + Vercel  
 **Limited:** Vercel only (loses real-time features)
 
-*See [DOCUMENTATION.txt](https://github.com/vikashgupta16/Alpha-Chats/blob/main/Alpha-Chats%20Complete%20Documentation.txt) for detailed deployment guides.*
+*See [DOCUMENTATION.txt](https://github.com/Vortex-16/Alpha-Chats/blob/main/Alpha-Chats%20Complete%20Documentation.txt) for detailed deployment guides.*
 
 ---
 
@@ -137,7 +137,7 @@ Found a bug? Have a feature idea? Contributions welcome!
 
 **Built with ❤️ by Vikash (Team Lead)**
 
-[![Stars](https://img.shields.io/github/stars/your-username/alpha-chats?style=social)](https://github.com/your-username/alpha-chats)
+[![Stars](https://img.shields.io/github/stars/Vortex-16/Alpha-Chats?style=social)](https://github.com/Vortex-16/Alpha-Chats)
 
 *⭐ Star this repo if you find it useful!*
 
